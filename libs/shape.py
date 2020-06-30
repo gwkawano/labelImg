@@ -38,12 +38,16 @@ class Shape(object):
     point_size = 8
     scale = 1.0
 
-    def __init__(self, label=None, line_color=None, difficult=False, paintLabel=False):
+    def __init__(self, label=None, line_color=None, difficult=False, truncated=False, occlusion=False, paintLabel=False): # CHG-GW
         self.label = label
         self.points = []
         self.fill = False
         self.selected = False
         self.difficult = difficult
+        # ADD-GW-S
+        self.truncated = truncated
+        self.occlusion = occlusion
+        # ADD-GW-E
         self.paintLabel = paintLabel
 
         self._highlightIndex = None
@@ -193,6 +197,10 @@ class Shape(object):
         if self.fill_color != Shape.fill_color:
             shape.fill_color = self.fill_color
         shape.difficult = self.difficult
+        # ADD-GW-S
+        shape.truncated = self.truncated
+        shape.occlusion = self.occlusion
+        # ADD-GW-E
         return shape
 
     def __len__(self):

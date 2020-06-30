@@ -51,7 +51,13 @@ class LabelFile(object):
             # Add Chris
             difficult = int(shape['difficult'])
             bndbox = LabelFile.convertPoints2BndBox(points)
-            writer.addBndBox(bndbox[0], bndbox[1], bndbox[2], bndbox[3], label, difficult)
+            # ADD-GW-S
+            truncated = int(shape['truncated'])
+            bndbox = LabelFile.convertPoints2BndBox(points)
+            occlusion = int(shape['occlusion'])
+            bndbox = LabelFile.convertPoints2BndBox(points)
+            # ADD-GW-E
+            writer.addBndBox(bndbox[0], bndbox[1], bndbox[2], bndbox[3], label, difficult, truncated, occlusion) # CHG-GW
 
         writer.save(targetFile=filename)
         return

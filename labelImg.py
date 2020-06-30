@@ -129,12 +129,24 @@ class MainWindow(QMainWindow, WindowMixin):
         self.diffcButton = QCheckBox(getStr('useDifficult'))
         self.diffcButton.setChecked(False)
         self.diffcButton.stateChanged.connect(self.btnstate)
+        # ADD-GW-S
+        self.truncatedButton = QCheckBox(u'truncated')
+        self.truncatedButton.setChecked(False)
+        self.truncatedButton.stateChanged.connect(self.truncatedState)
+        self.occlusionButton = QCheckBox(u'occlusion')
+        self.occlusionButton.setChecked(False)
+        self.occlusionButton.stateChanged.connect(self.occlusionState)
+        # ADD-GW-E
         self.editButton = QToolButton()
         self.editButton.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
 
         # Add some of widgets to listLayout
         listLayout.addWidget(self.editButton)
         listLayout.addWidget(self.diffcButton)
+        # ADD-GW-S
+        listLayout.addWidget(self.truncatedButton)
+        listLayout.addWidget(self.occlusionButton)
+        # ADD-GW-E
         listLayout.addWidget(useDefaultLabelContainer)
 
         # Create and add combobox for showing unique labels in group 
@@ -418,6 +430,10 @@ class MainWindow(QMainWindow, WindowMixin):
         self.fit_window = False
         # Add Chris
         self.difficult = False
+        # ADD-GW-S
+        self.truncated = False
+        self.occlusion = False
+        # ADD-GW-E
 
         ## Fix the compatible issue for qt4 and qt5. Convert the QStringList to python list
         if settings.get(SETTING_RECENT_FILES):
@@ -451,6 +467,10 @@ class MainWindow(QMainWindow, WindowMixin):
         self.canvas.setDrawingColor(self.lineColor)
         # Add chris
         Shape.difficult = self.difficult
+        # ADD-GW-S
+        Shape.truncated = self.truncated
+        Shape.occlusion = self.occlusion
+        # ADD-GW-E
 
         def xbool(x):
             if isinstance(x, QVariant):
@@ -715,6 +735,55 @@ class MainWindow(QMainWindow, WindowMixin):
         except:
             pass
 
+    # ADD-GW-S
+    def truncatedState(self, item = None):
+        if not self.canvas.editing():
+            return
+
+        item = self.currentItem()
+        if not item:
+            item = self.labelList.item(self.labelList.count()-1)
+
+        truncated = self.truncatedButton.isChecked()
+
+        try:
+            shape = self.itemsToShapes[item]
+        except:
+            pass
+        try:
+            if truncated != shape.truncated:
+                shape.truncated = truncated
+                self.setDirty()
+            else:
+                self.canvas.setShapeVisible(shape, item.checkState() == Qt.Checked)
+        except:
+            pass
+
+    def occlusionState(self, item = None):
+        if not self.canvas.editing():
+            return
+
+        item = self.currentItem()
+        if not item:
+            item = self.labelList.item(self.labelList.count()-1)
+
+        occlusion = self.occlusionButton.isChecked()
+
+        try:
+            shape = self.itemsToShapes[item]
+        except:
+            pass
+        try:
+            if occlusion != shape.occlusion:
+                shape.occlusion = occlusion
+                self.setDirty()
+            else:
+                self.canvas.setShapeVisible(shape, item.checkState() == Qt.Checked)
+        except:
+            pass
+
+    # ADD-GW-E
+
     # React to canvas signals.
     def shapeSelectionChanged(self, selected=False):
         if self._noSelectionSlot:
@@ -756,7 +825,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def loadLabels(self, shapes):
         s = []
-        for label, points, line_color, fill_color, difficult in shapes:
+        for label, points, line_color, fill_color, difficult, truncated, occlusion in shapes: # CHG-GW
             shape = Shape(label=label)
             for x, y in points:
 
@@ -767,6 +836,10 @@ class MainWindow(QMainWindow, WindowMixin):
 
                 shape.addPoint(QPointF(x, y))
             shape.difficult = difficult
+            # ADD-GW-S
+            shape.truncated = truncated
+            shape.occlusion = occlusion
+            # ADD-GW-E
             shape.close()
             s.append(shape)
 
@@ -806,8 +879,14 @@ class MainWindow(QMainWindow, WindowMixin):
                         line_color=s.line_color.getRgb(),
                         fill_color=s.fill_color.getRgb(),
                         points=[(p.x(), p.y()) for p in s.points],
-                       # add chris
-                        difficult = s.difficult)
+                        # add chris
+                        difficult = s.difficult,
+                        # ADD-GW-S
+                        truncated = s.truncated,
+                        occlusion = s.occlusion,
+                        # ADD-GW-E
+                        )
+
 
         shapes = [format_shape(shape) for shape in self.canvas.shapes]
         # Can add differrent annotation formats here
@@ -854,6 +933,10 @@ class MainWindow(QMainWindow, WindowMixin):
             shape = self.itemsToShapes[item]
             # Add Chris
             self.diffcButton.setChecked(shape.difficult)
+            # ADD-GW-S
+            self.truncatedButton.setChecked(shape.truncated)
+            self.occlusionButton.setChecked(shape.occlusion)
+            # ADD-GW-E
 
     def labelItemChanged(self, item):
         shape = self.itemsToShapes[item]
@@ -887,6 +970,10 @@ class MainWindow(QMainWindow, WindowMixin):
 
         # Add Chris
         self.diffcButton.setChecked(False)
+        # ADD-GW-S
+        self.truncatedButton.setChecked(False)
+        self.occlusionButton.setChecked(False)
+        # ADD-GW-E
         if text is not None:
             self.prevLabelText = text
             generate_color = generateColorByText(text)

@@ -77,10 +77,12 @@ class PascalVocWriter:
         segmented.text = '0'
         return top
 
-    def addBndBox(self, xmin, ymin, xmax, ymax, name, difficult):
+    def addBndBox(self, xmin, ymin, xmax, ymax, name, difficult, truncated, occlusion):
         bndbox = {'xmin': xmin, 'ymin': ymin, 'xmax': xmax, 'ymax': ymax}
         bndbox['name'] = name
         bndbox['difficult'] = difficult
+        bndbox['truncated'] = truncated
+        bndbox['occlusion'] = occlusion
         self.boxlist.append(bndbox)
 
     def appendObjects(self, top):
@@ -90,15 +92,23 @@ class PascalVocWriter:
             name.text = ustr(each_object['name'])
             pose = SubElement(object_item, 'pose')
             pose.text = "Unspecified"
-            truncated = SubElement(object_item, 'truncated')
+            # DEL-GW-S
+            '''truncated = SubElement(object_item, 'truncated')
             if int(float(each_object['ymax'])) == int(float(self.imgSize[0])) or (int(float(each_object['ymin']))== 1):
                 truncated.text = "1" # max == height or min
             elif (int(float(each_object['xmax']))==int(float(self.imgSize[1]))) or (int(float(each_object['xmin']))== 1):
                 truncated.text = "1" # max == width or min
             else:
-                truncated.text = "0"
+                truncated.text = "0"'''
+            # DEL-GW-E
             difficult = SubElement(object_item, 'difficult')
             difficult.text = str( bool(each_object['difficult']) & 1 )
+            # ADD-GW-S
+            truncated = SubElement(object_item, 'truncated')
+            truncated.text = str(bool(each_object['truncated']) & 1)
+            occlusion = SubElement(object_item, 'occlusion')
+            occlusion.text = str(bool(each_object['occlusion']) & 1)
+            # ADD-GW-E
             bndbox = SubElement(object_item, 'bndbox')
             xmin = SubElement(bndbox, 'xmin')
             xmin.text = str(each_object['xmin'])
@@ -140,13 +150,13 @@ class PascalVocReader:
     def getShapes(self):
         return self.shapes
 
-    def addShape(self, label, bndbox, difficult):
+    def addShape(self, label, bndbox, difficult, truncated, occlusion):
         xmin = int(float(bndbox.find('xmin').text))
         ymin = int(float(bndbox.find('ymin').text))
         xmax = int(float(bndbox.find('xmax').text))
         ymax = int(float(bndbox.find('ymax').text))
         points = [(xmin, ymin), (xmax, ymin), (xmax, ymax), (xmin, ymax)]
-        self.shapes.append((label, points, None, None, difficult))
+        self.shapes.append((label, points, None, None, difficult, truncated, occlusion))
 
     def parseXML(self):
         assert self.filepath.endswith(XML_EXT), "Unsupport file format"
@@ -167,5 +177,13 @@ class PascalVocReader:
             difficult = False
             if object_iter.find('difficult') is not None:
                 difficult = bool(int(object_iter.find('difficult').text))
-            self.addShape(label, bndbox, difficult)
+            # ADD-GW-S
+            truncated = False
+            if object_iter.find('truncated') is not None:
+                truncated = bool(int(object_iter.find('truncated').text))
+            occlusion = False
+            if object_iter.find('occlusion') is not None:
+                occlusion = bool(int(object_iter.find('occlusion').text))
+            # ADD-GW-E
+            self.addShape(label, bndbox, difficult, truncated, occlusion) # CHG-GW
         return True
